@@ -1,0 +1,79 @@
+// Section 5, video 3
+
+// this import brings the crypto-js library into the context of this file
+const SHA256 = require('crypto-js/sha256');
+
+// a classes are blueprints for objects that we need
+class Block {
+    // the constructor always runs when an object of this class is instantiated
+    constructor( index, timestamp, data, previousHash ) {
+        this.index = index;
+        this.timestamp = timestamp;
+        this.data = data;
+        this.previousHash = previousHash;
+    }
+    
+    //uses crypto-js's SHA256 encryption to create a has of our block data
+    calculateHash() {
+        return SHA256( this.index + this.previousHash + this.timestamp + JSON.stringify( this.data)).toString();
+    }    
+}
+
+class Blockchain {
+    constructor() {
+        this.chain = [ this.createGenesisBlock() ];
+    }
+    
+    createGenesisBlock() {
+        return new Block( 0, "15/01/2008", "Genesis Block", "0" );
+    }
+    
+    getLatestBlock() {
+        return this.chain[ this.chain.length - 1 ];
+    }
+    
+    // this function takes a parameter of type 'Block' 
+    // which is then used in its body
+    addBlock( newBlock ) {
+        newBlock.previousHash = this.getLatestBlock().hash;
+        newBlock.hash = newBlock.calculateHash();
+        this.chain.push( newBlock );
+    }
+    
+    isChainValid() {
+        for ( let i = 1; i < this.chain.length; i++ ) {
+            const currentBlock = this.chain[ i ];
+            const previousBlock = this.chain[ i - 1 ];
+            
+            // validate data integrity
+            if ( currentBlock.hash !== currentBlock.calculateHash() ) {
+                return false;
+            }
+            
+            // validate hash chain link
+            if ( currentBlock.previousHash !== previousBlock.hash ) {
+               return false;
+            }
+        }
+        
+        // all good, no manipulated data or bad links
+        return true;
+    }
+}
+
+
+// run the above code by instantiating a new 
+// blockchain object and adding 2 new blocks
+let demoChain = new Blockchain();
+demoChain.addBlock( new Block( 1, "15/02/2018", {
+    amount: 10
+}) );
+demoChain.addBlock( new Block( 2, "16/02/2018", {
+    amount: 25
+}) );
+
+// show the results in the console...
+console.log( JSON.stringify( demoChain, null, 4 ) );
+
+// validate the chain...
+console.log( "Is chain valid? " + demoChain.isChainValid() );
